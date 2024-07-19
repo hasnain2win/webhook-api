@@ -45,7 +45,7 @@ public class RedisMessagePublisher {
         importantData.put("author", authorName);
 
         // Generate the channel name
-        String channelName = String.format("creator:%s:commit:%s", authorName, commitId);
+        String channelName = String.format("summary-creator:%s:commit:%s", authorName, commitId);
 
         // Publish the important data
         redisTemplate.convertAndSend(channelName, importantData);
