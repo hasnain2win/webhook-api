@@ -2,49 +2,46 @@
 
 package com.hasnain.webhook_api.config;
 
-
-import com.hasnain.webhook_api.controller.StreamController;
-import io.lettuce.core.resource.ClientResources;
-import io.lettuce.core.resource.DefaultClientResources;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.listener.ReactiveRedisMessageListenerContainer;
+import org.springframework.data.redis.serializer.*;
 
 @Configuration
 public class RedisConfig {
 
-
-
-    @Bean
-    public RedisConnectionFactory redisConnectionFactory() {
+     @Bean
+    public LettuceConnectionFactory redisConnectionFactory() {
         return new LettuceConnectionFactory();
     }
 
     @Bean
-    public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, String> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-        return template;
-    }
+    public ReactiveRedisTemplate<String, Object> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
+        // Serializer for keys (Strings)
+        StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
 
+        // Serializer for values (Objects)
+        GenericToStringSerializer<Object> objectSerializer = new GenericToStringSerializer<>(Object.class);
+
+        // Create serialization context with key and value serializers
+        RedisSerializationContext<String, Object> serializationContext = RedisSerializationContext.<String, Object>newSerializationContext()
+                .key(stringRedisSerializer)
+                .value(objectSerializer)
+                .hashKey(stringRedisSerializer)
+                .hashValue(objectSerializer)
+                .build();
+
+        return new ReactiveRedisTemplate<>(factory, serializationContext);
+    }
     @Bean
-    public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory connectionFactory) {
-        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-        container.setConnectionFactory(connectionFactory);
-        return container;
+    public ReactiveRedisMessageListenerContainer reactiveRedisMessageListenerContainer(
+            ReactiveRedisConnectionFactory factory) {
+        return new ReactiveRedisMessageListenerContainer(factory);
     }
-
-
 }
-
-
-
-

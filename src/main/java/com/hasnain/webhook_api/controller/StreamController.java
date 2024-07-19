@@ -1,69 +1,80 @@
 package com.hasnain.webhook_api.controller;
 
 import com.hasnain.webhook_api.StreamRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.connection.Message;
-import org.springframework.data.redis.connection.MessageListener;
+import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
+import org.springframework.data.redis.connection.ReactiveSubscription;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
-import org.springframework.http.MediaType;
+import org.springframework.data.redis.listener.ReactiveRedisMessageListenerContainer;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 public class StreamController {
 
     @Autowired
-    private RedisMessageListenerContainer redisMessageListenerContainer;
+    private ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
 
-    private static final Logger logger = LoggerFactory.getLogger(StreamController.class);
-    private final Map<String, MessageListener> listeners = new ConcurrentHashMap<>();
+    @Autowired
+    private ReactiveRedisMessageListenerContainer container;
 
-    @GetMapping(value = "/webapp/api/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(value = "/webapp/api/stream", produces = "text/event-stream")
     public SseEmitter streamEvents(@RequestBody StreamRequest streamRequest) {
-        String channel = String.format("summary-%s:%s", streamRequest.getCallerId(), streamRequest.getAgentId());
+        String channel = String.format("summary-creator:%s", streamRequest.getAgentId());
+        System.out.println("Subscribing to channel " + channel);
+       /* // Create a Flux that listens to the Redis channel
+        Flux<String> messageFlux = container.receive(ChannelTopic.of(channel))
+                .map(message -> new String(message.getMessage()));
+
         SseEmitter emitter = new SseEmitter(30 * 60 * 1000L); // 30-minute timeout
 
-        logger.info("Opening SSE connection for channel: {}", channel);
+        // Send data to the client
+        messageFlux.subscribe(
+                message -> {
+                    try {
+                        emitter.send(SseEmitter.event().data(message));
+                    } catch (IOException e) {
+                        emitter.completeWithError(e);
+                    }
+                },
+                error -> emitter.completeWithError(error),
+                () -> emitter.complete()
+        );
 
-        MessageListener messageListener = listeners.computeIfAbsent(channel, key -> new MessageListenerAdapter(new MessageListener() {
-            @Override
-            public void onMessage(Message message, byte[] pattern) {
-                try {
-                    String messageContent = new String(message.getBody());
-                    logger.info("Received message: {}", messageContent);
-                    emitter.send(SseEmitter.event().data(messageContent));
-                } catch (IOException e) {
-                    logger.error("Error while sending message to client", e);
-                    emitter.completeWithError(e);
-                }
-            }
-        }));
+        return emitter;
+    }*/
+        SseEmitter emitter = new SseEmitter(300000L); // 5 minutes
 
-        redisMessageListenerContainer.addMessageListener(messageListener, new ChannelTopic(channel));
+        long startTime = System.currentTimeMillis();
 
-        emitter.onCompletion(() -> {
-            logger.info("SSE connection completed for channel: {}", channel);
-            redisMessageListenerContainer.removeMessageListener(messageListener);
-            listeners.remove(channel);
-        });
+        Flux<? extends ReactiveSubscription.Message<String, String>> messageFlux = reactiveRedisTemplate.listenToChannel(channel)
+                .doOnSubscribe(subscription -> System.out.println("Subscribed to channel: " + channel))
+                .doOnNext(message -> {
+                    try {
+                        emitter.send(SseEmitter.event().data(message));
+                    } catch (IOException e) {
+                        emitter.completeWithError(e);
+                    }
+                    System.out.println("Message sent at: " + (System.currentTimeMillis() - startTime) + " ms");
+                })
+                .doOnError(error -> {
+                    System.err.println("Error receiving message: " + error.getMessage());
+                    emitter.completeWithError(error);
+                })
+                .doOnComplete(() -> System.out.println("Subscription completed"));
 
-        emitter.onTimeout(() -> {
-            logger.warn("SSE connection timed out for channel: {}", channel);
-            emitter.complete();
-            redisMessageListenerContainer.removeMessageListener(messageListener);
-            listeners.remove(channel);
-        });
+        messageFlux.subscribe();
+
+        emitter.onCompletion(() -> emitter.complete());
+        emitter.onError(e -> emitter.completeWithError(e));
 
         return emitter;
     }
 }
+
