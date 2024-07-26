@@ -1,0 +1,74 @@
+package im;
+
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.SocketOptions;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import java.util.concurrent.TimeUnit;
+
+@Configuration
+public class RedisConfiguration {
+    @Value("${azure.rediscache.uri}")
+    private String host;
+
+    @Value("${azure.rediscache.port}")
+    private String port;
+
+    @Value("${azure.rediscache.password}")
+    private String redisPassword;
+
+    @Value("${azure.rediscache.connection.timeout:30000}")
+    private long timeout;
+    private static final Logger LOGGER = LogManager.getLogger(RedisConfiguration.class);
+
+    @Bean // adding spring beans to lettuce
+    public LettuceConnectionFactory redisConnectionFactory() {
+        LOGGER.info("Starting redisConnectionFactory()");
+
+        final SocketOptions socketoptions = SocketOptions.builder().connectTimeout(timeout, TimeUnit.SECONDS).build();
+        final ClientOptions clientoptions = ClientOptions.builder().socketOptions(socketoptions).build();
+
+        // Use ssl to connect to redis by client for stage environment!
+        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder().clientOptions(clientoptions).useSsl().build();
+
+        // Set up configuration for redis server regarding host and port!
+        RedisStandaloneConfiguration serverConfig = new RedisStandaloneConfiguration(host, Integer.parseInt(port));
+        serverConfig.setPassword(redisPassword);
+
+        final LettuceConnectionFactory lcf = new LettuceConnectionFactory(serverConfig, clientConfig);
+        lcf.setValidateConnection(true);
+
+        LOGGER.info("Ending redisConnectionFactory()");
+        return lcf;
+    }
+
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+        LOGGER.info("Starting redisTemplate()");
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        LOGGER.info("Ending redisTemplate()");
+        return template;
+    }
+
+    @Bean
+    public RedisMessageListenerContainer redisContainer(RedisConnectionFactory connectionFactory) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        return container;
+    }
+}
