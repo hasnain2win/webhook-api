@@ -1,0 +1,125 @@
+[m2024-07-26 10:27:05.158 INFO  [http-nio-8951-exec-8] c.m.c.c.ContactSummaryWebhookController:handleWebhook():25 - start of handleWebhook method :WebhookController
+[m[m2024-07-26 10:27:05.159 INFO  [http-nio-8951-exec-8] c.m.c.s.ContactSummaryPublishService:publishImportantData():27 - Started publishImportantData method :ContactSummaryPublishService
+[mPublished to channel: ac-summary-event with data: Caller ID: 45784MAB, Agent ID: Test, Timestamp: 1721837071223. This call was automatically summarized.
+[m2024-07-26 10:27:05.162 INFO  [http-nio-8951-exec-8] c.m.c.s.ContactSummaryPublishService:publishImportantData():51 - End of publishImportantData method :ContactSummaryPublishService
+[m[m2024-07-26 10:27:05.162 INFO  [http-nio-8951-exec-8] c.m.c.c.ContactSummaryWebhookController:handleWebhook():28 - end of handleWebhook method :WebhookController
+[m[31m2024-07-26 10:27:05.163 ERROR [pool-8-thread-30] c.m.c.c.ContactSummaryStreamController:sendMessage():66 - Attempted to send a message through an emitter that has already completed
+[m java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:97) ~[spring-core-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:212) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:135) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.sendMessage(ContactSummaryStreamController.java:63) ~[!/:0.0.1-SNAPSHOT]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.lambda$streamMessage$0(ContactSummaryStreamController.java:44) ~[!/:0.0.1-SNAPSHOT]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) ~[?:?]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
+[31m2024-07-26 10:27:05.163 ERROR [pool-8-thread-30] c.m.c.c.ContactSummaryStreamController:sendMessage():66 - Attempted to send a message through an emitter that has already completed
+[m java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:97) ~[spring-core-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:212) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:135) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.sendMessage(ContactSummaryStreamController.java:63) ~[!/:0.0.1-SNAPSHOT]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.lambda$streamMessage$0(ContactSummaryStreamController.java:44) ~[!/:0.0.1-SNAPSHOT]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) ~[?:?]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
+[31m2024-07-26 10:27:05.164 ERROR [pool-8-thread-30] c.m.c.c.ContactSummaryStreamController:sendMessage():66 - Attempted to send a message through an emitter that has already completed
+[m java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:97) ~[spring-core-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:212) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:135) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.sendMessage(ContactSummaryStreamController.java:63) ~[!/:0.0.1-SNAPSHOT]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.lambda$streamMessage$0(ContactSummaryStreamController.java:44) ~[!/:0.0.1-SNAPSHOT]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) ~[?:?]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
+[31m2024-07-26 10:27:05.164 ERROR [pool-8-thread-30] c.m.c.c.ContactSummaryStreamController:sendMessage():66 - Attempted to send a message through an emitter that has already completed
+[m java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:97) ~[spring-core-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:212) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:135) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.sendMessage(ContactSummaryStreamController.java:63) ~[!/:0.0.1-SNAPSHOT]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.lambda$streamMessage$0(ContactSummaryStreamController.java:44) ~[!/:0.0.1-SNAPSHOT]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) ~[?:?]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
+[31m2024-07-26 10:27:05.165 ERROR [pool-8-thread-30] c.m.c.c.ContactSummaryStreamController:sendMessage():66 - Attempted to send a message through an emitter that has already completed
+[m java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:97) ~[spring-core-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:212) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:135) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.sendMessage(ContactSummaryStreamController.java:63) ~[!/:0.0.1-SNAPSHOT]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.lambda$streamMessage$0(ContactSummaryStreamController.java:44) ~[!/:0.0.1-SNAPSHOT]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) ~[?:?]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
+[31m2024-07-26 10:27:05.165 ERROR [pool-8-thread-28] c.m.c.c.ContactSummaryStreamController:sendMessage():66 - Attempted to send a message through an emitter that has already completed
+[m java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:97) ~[spring-core-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:212) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:135) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.sendMessage(ContactSummaryStreamController.java:63) ~[!/:0.0.1-SNAPSHOT]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.lambda$streamMessage$0(ContactSummaryStreamController.java:44) ~[!/:0.0.1-SNAPSHOT]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) ~[?:?]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
+[31m2024-07-26 10:27:05.166 ERROR [pool-8-thread-28] c.m.c.c.ContactSummaryStreamController:sendMessage():66 - Attempted to send a message through an emitter that has already completed
+[m java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:97) ~[spring-core-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:212) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:135) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.sendMessage(ContactSummaryStreamController.java:63) ~[!/:0.0.1-SNAPSHOT]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.lambda$streamMessage$0(ContactSummaryStreamController.java:44) ~[!/:0.0.1-SNAPSHOT]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) ~[?:?]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
+[31m2024-07-26 10:27:05.164 ERROR [pool-8-thread-31] c.m.c.c.ContactSummaryStreamController:sendMessage():66 - Attempted to send a message through an emitter that has already completed
+[m java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:97) ~[spring-core-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:212) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:135) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.sendMessage(ContactSummaryStreamController.java:63) ~[!/:0.0.1-SNAPSHOT]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.lambda$streamMessage$0(ContactSummaryStreamController.java:44) ~[!/:0.0.1-SNAPSHOT]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) ~[?:?]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
+[31m2024-07-26 10:27:05.167 ERROR [pool-8-thread-28] c.m.c.c.ContactSummaryStreamController:sendMessage():66 - Attempted to send a message through an emitter that has already completed
+[m java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:97) ~[spring-core-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:212) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:135) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.sendMessage(ContactSummaryStreamController.java:63) ~[!/:0.0.1-SNAPSHOT]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.lambda$streamMessage$0(ContactSummaryStreamController.java:44) ~[!/:0.0.1-SNAPSHOT]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) ~[?:?]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
+[31m2024-07-26 10:27:05.167 ERROR [pool-8-thread-31] c.m.c.c.ContactSummaryStreamController:sendMessage():66 - Attempted to send a message through an emitter that has already completed
+[m java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:97) ~[spring-core-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:212) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:135) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.sendMessage(ContactSummaryStreamController.java:63) ~[!/:0.0.1-SNAPSHOT]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.lambda$streamMessage$0(ContactSummaryStreamController.java:44) ~[!/:0.0.1-SNAPSHOT]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) ~[?:?]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
+[31m2024-07-26 10:27:05.168 ERROR [pool-8-thread-31] c.m.c.c.ContactSummaryStreamController:sendMessage():66 - Attempted to send a message through an emitter that has already completed
+[m java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:97) ~[spring-core-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:212) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:135) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.sendMessage(ContactSummaryStreamController.java:63) ~[!/:0.0.1-SNAPSHOT]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.lambda$streamMessage$0(ContactSummaryStreamController.java:44) ~[!/:0.0.1-SNAPSHOT]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) ~[?:?]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
+[31m2024-07-26 10:27:05.168 ERROR [pool-8-thread-28] c.m.c.c.ContactSummaryStreamController:sendMessage():66 - Attempted to send a message through an emitter that has already completed
+[m java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:97) ~[spring-core-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:212) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:135) ~[spring-webmvc-6.1.8.jar!/:6.1.8]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.sendMessage(ContactSummaryStreamController.java:63) ~[!/:0.0.1-SNAPSHOT]
+	at com.membermismatch.contact.controller.ContactSummaryStreamController.lambda$streamMessage$0(ContactSummaryStreamController.java:44) ~[!/:0.0.1-SNAPSHOT]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) ~[?:?]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
