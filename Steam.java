@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 public class ContactSummaryStreamController {
 
@@ -26,52 +27,64 @@ public class ContactSummaryStreamController {
     private RedisMessageListenerContainer redisMessageListenerContainer;
 
     private final ConcurrentHashMap<String, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Boolean> emitterStatus = new ConcurrentHashMap<>();
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
-    @GetMapping(value = "/contactSummaryStream/{channelId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamMessage(@PathVariable String channelId) {
-        logger.info("Start of streamMessage method : ContactSummaryStreamController for channel {}", StringEscapeUtils.escapeJava(channelId));
-        
-        SseEmitter emitter = new SseEmitter();
-        emitters.put(channelId, emitter);
+    @GetMapping(value = "/contactSummaryStream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamMessage() {
+        logger.info("Start of streamMessage method: ContactSummaryStreamController");
 
-        ChannelTopic topic = new ChannelTopic(channelId);
+        String channelName = "ac-summary-event";
+        SseEmitter emitter = new SseEmitter(0L); // Unlimited timeout
+        emitters.put(channelName, emitter);
+        emitterStatus.put(channelName, false); // Initially not completed
+
+        ChannelTopic topic = new ChannelTopic(channelName);
+
         MessageListener listener = (Message message, byte[] pattern) -> {
             String data = new String(message.getBody());
-            logger.debug("Received message on channel {}: {}", StringEscapeUtils.escapeJava(channelId), StringEscapeUtils.escapeJava(data));
+            logger.info("Received message on channel {}: {}", StringEscapeUtils.escapeJava(channelName), StringEscapeUtils.escapeJava(data));
 
-            executor.execute(() -> sendMessage(emitter, data, channelId));
+            executor.execute(() -> sendMessage(emitter, data, channelName));
         };
 
         redisMessageListenerContainer.addMessageListener(listener, topic);
 
-        emitter.onCompletion(() -> cleanupEmitter(channelId, topic, listener));
-        emitter.onTimeout(() -> cleanupEmitter(channelId, topic, listener));
-
-        logger.info("End of streamMessage method : ContactSummaryStreamController for channel {}", StringEscapeUtils.escapeJava(channelId));
+        emitter.onCompletion(() -> cleanupEmitter(channelName, topic, listener));
+        emitter.onTimeout(() -> cleanupEmitter(channelName, topic, listener));
+        logger.info("End of streamMessage method :ContactSummaryStreamController");
         return emitter;
     }
 
     private void sendMessage(SseEmitter emitter, String data, String channel) {
         try {
-            if (emitter == null) {
-                logger.debug("Emitter is null for channel: {}", StringEscapeUtils.escapeJava(channel));
-                return;
+            // Used a synchronized block to ensure thread-safe access to emitter status
+            synchronized (emitterStatus) {
+                if (!emitterStatus.getOrDefault(channel, true)) { // Check if emitter is completed
+                    emitter.send(SseEmitter.event().data(data));
+                }
             }
-
-            emitter.send(SseEmitter.event().data(data));
-        } catch (IllegalStateException e) {
-            logger.error("Attempted to send a message through an emitter that has already completed", e);
-            emitters.remove(channel);
         } catch (IOException e) {
             logger.error("Error sending SSE message for channel {}: {}", StringEscapeUtils.escapeJava(channel), e.getMessage());
-            emitters.remove(channel);
+            cleanupEmitter(channel, new ChannelTopic(channel), null); // Clean up on error
         }
     }
 
     private void cleanupEmitter(String channel, ChannelTopic topic, MessageListener listener) {
         logger.info("Cleaning up SSE emitter for channel: {}", StringEscapeUtils.escapeJava(channel));
         emitters.remove(channel);
-        redisMessageListenerContainer.removeMessageListener(listener, topic);
+        emitterStatus.remove(channel); // Remove status entry
+        if (listener != null) {
+            redisMessageListenerContainer.removeMessageListener(listener, topic);
+        }
+    }
+    private String determineChannelName(String callId, String agentId, String profileType) {
+        if (profileType != null && profileType.contains("pbm")) {
+            return String.format("channel-pbm-%s-%s", callId, agentId);
+        } else if (profileType != null && profileType.contains("pharmacy")) {
+            return String.format("channel-pharmacy-%s-%s", callId, agentId);
+        } else {
+            return String.format("channel-%s-%s", callId, agentId);
+        }
     }
 }
