@@ -52,6 +52,7 @@ public class ContactSummaryStreamController {
 
         emitter.onCompletion(() -> cleanupEmitter(channelName, topic, listener));
         emitter.onTimeout(() -> cleanupEmitter(channelName, topic, listener));
+        emitter.onError(e->logger.error("Error on emitter for channel {}: {}", StringEscapeUtils.escapeJava(channelName), e.getMessage()));
         logger.info("End of streamMessage method :ContactSummaryStreamController");
         return emitter;
     }
