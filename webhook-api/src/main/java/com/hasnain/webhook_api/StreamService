@@ -1,0 +1,70 @@
+package com.membermismatch.contact.service;
+
+import org.apache.commons.text.StringEscapeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.Message;
+import org.springframework.data.redis.connection.MessageListener;
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+@Service
+public class ContactSummaryStreamService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ContactSummaryStreamService.class);
+
+    @Autowired
+    private RedisMessageListenerContainer redisMessageListenerContainer;
+
+    private final ConcurrentHashMap<String, Sinks.Many<ServerSentEvent<String>>> sinks = new ConcurrentHashMap<>();
+    private final ExecutorService executor = Executors.newCachedThreadPool();
+
+    public Flux<ServerSentEvent<String>> streamMessage() {
+        logger.info("Start of streamMessage method: ContactSummaryStreamService");
+        String channelName = "ac-summary-event";
+        Sinks.Many<ServerSentEvent<String>> sink = Sinks.many().multicast().onBackpressureBuffer();
+        sinks.put(channelName, sink);
+
+        ChannelTopic topic = new ChannelTopic(channelName);
+
+        MessageListener listener = (Message message, byte[] pattern) -> {
+            String data = new String(message.getBody());
+            logger.info("Received message on channel {}: {}", StringEscapeUtils.escapeJava(channelName), StringEscapeUtils.escapeJava(data));
+            executor.execute(() -> sink.tryEmitNext(ServerSentEvent.builder(data).build()));
+        };
+
+        redisMessageListenerContainer.addMessageListener(listener, topic);
+        return sink.asFlux()
+                .doOnError(e -> logger.error("Error in SSE stream for channel: {}, {}",StringEscapeUtils.escapeJava(channelName), e.getMessage()))
+                .doOnCancel(() -> cleanup(channelName, topic, listener))
+                .doFinally(signalType -> cleanup(channelName, topic, listener));
+    }
+
+    private void cleanup(String channel, ChannelTopic topic, MessageListener listener) {
+        logger.info("Cleaning up SSE sink for channel: {}", StringEscapeUtils.escapeJava(channel));
+        sinks.remove(channel);
+        if (listener != null) {
+            redisMessageListenerContainer.removeMessageListener(listener, topic);
+        }
+        logger.info("SSE sink cleanup complete for channel: {}", StringEscapeUtils.escapeJava(channel));
+    }
+
+    private String determineChannelName(String callId, String agentId, String profileType) {
+        if (profileType != null && profileType.contains("pbm")) {
+            return String.format("channel-pbm-%s-%s", callId, agentId);
+        } else if (profileType != null && profileType.contains("pharmacy")) {
+            return String.format("channel-pharmacy-%s-%s", callId, agentId);
+        } else {
+            return String.format("channel-%s-%s", callId, agentId);
+        }
+    }
+}
