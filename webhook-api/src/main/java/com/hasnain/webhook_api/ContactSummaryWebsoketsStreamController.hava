@@ -1,0 +1,37 @@
+package com.membermismatch.contact.controller;
+
+import com.membermismatch.contact.service.ContactSummaryStreamService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+
+import java.time.Duration;
+
+@RestController
+public class ContactSummaryWebsoketsStreamController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ContactSummaryStreamController.class);
+
+  
+
+    @RequestMapping(value = "/contactSummaryStream/callId/{callId}/agentId/{agentId}/profileType/{profileType}", method = RequestMethod.GET)
+    public ResponseEntity<String> handleWebSocketConnection(
+            @PathVariable("callId") String callId,
+            @PathVariable("agentId") String agentId,
+            @PathVariable("profileType") String profileType) {
+
+        logger.info("Start of handleWebSocketConnection method: ContactSummaryStreamController: callId: {}, agentId:{}", callId, agentId);
+        // Construct the WebSocket URL with channel information
+        String channelName=String.format("channel-%s-%s-%s", profileType, agentId, callId);
+        // Return a view name or handle WebSocket setup directly
+        // If redirecting, make sure to pass the channel information as a query parameter
+        logger.info("End of handleWebSocketConnection method: ContactSummaryStreamController");
+        String body= "WebSocket connection established for channel: " + channelName;
+        return ResponseEntity.ok().body(body);
+    }
+}
