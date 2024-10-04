@@ -31,45 +31,51 @@ public class ContactSummaryPublishServiceImpl implements ContactSummaryPublishSe
             JsonNode dataNode = objectMapper.readTree(jsonPayload).path("data");
 
             if (dataNode.isMissingNode()) {
-                LOGGER.info("No data node found in the payload");
+                LOGGER.warn("No 'data' node found in the payload");
                 return;
             }
 
             String ucid = getJsonValue(dataNode, "UCID", "ucid");
-            String summaryText = getJsonValue(dataNode, "SummaryText", "summaryText");
-            boolean isSuccess = dataNode.path("IsSuccess").asBoolean(true);
-            String failedReason = dataNode.path("FailedReason").asText("");
-
             if (ucid == null) {
-                LOGGER.info("No UCID found in the payload");
+                LOGGER.warn("No UCID found in the payload");
                 return;
             }
 
-            String streamName = String.format("channel-%s", ucid);
+            String summaryText = getJsonValue(dataNode, "SummaryText", "summaryText");
+            if (summaryText == null || summaryText.trim().isEmpty()) {
+                LOGGER.warn("SummaryText is null or empty, nothing to publish");
+                return;
+            }
+
+            boolean isSuccess = dataNode.path("IsSuccess").asBoolean(true);
+            String failedReason = dataNode.path("FailedReason").asText("");
+
+            // If there is a failure, override the summaryText with failure reason
             if (!isSuccess || !failedReason.isEmpty()) {
                 summaryText = String.format("FailedSummary: %s", failedReason);
             }
 
-            if (summaryText != null) {
-                // Convert data to a map and publish to Redis stream
-                Map<String, String> messageData = new HashMap<>();
-                messageData.put("summaryText", summaryText);
+            // Stream name format: "channel-<ucid>"
+            String streamName = String.format("channel-%s", ucid);
 
-                redisTemplate.opsForStream().add(MapRecord.create(streamName, messageData));
+            // Convert data to a map and publish to Redis stream
+            Map<String, String> messageData = new HashMap<>();
+            messageData.put("summaryText", summaryText);
 
-                LOGGER.info("Published to redis channel: {} with data: {}", streamName, summaryText);
-            } else {
-                LOGGER.info("Summary text is null, nothing to publish");
-            }
+            // Publish to Redis stream
+            redisTemplate.opsForStream().add(MapRecord.create(streamName, messageData));
+
+            LOGGER.info("Published to redis channel: {} with data: {}", streamName, summaryText);
 
         } catch (JsonProcessingException e) {
-            LOGGER.error("Error parsing JSON payload: {}", e.getMessage());
-            throw new RuntimeException(e);
+            LOGGER.error("Error parsing JSON payload: {}", e.getMessage(), e);
+            throw new RuntimeException("Error processing JSON payload", e);
         } catch (Exception e) {
-            LOGGER.error("Unexpected error: {}", e.getMessage());
-            throw new RuntimeException(e);
+            LOGGER.error("Unexpected error: {}", e.getMessage(), e);
+            throw new RuntimeException("Unexpected error during publishing", e);
+        } finally {
+            LOGGER.info("End of publishContactSummary method");
         }
-        LOGGER.info("End of publishContactSummary method");
     }
 
     private String getJsonValue(JsonNode dataNode, String primaryKey, String secondaryKey) {
