@@ -1,89 +1,82 @@
-package com.membermismatch.contact.controller;
+package com.membermismatch.contact.service.impl;
 
-import org.apache.commons.text.StringEscapeUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.connection.Message;
-import org.springframework.data.redis.connection.MessageListener;
-import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.membermismatch.contact.service.ContactSummaryPublishService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.data.redis.connection.stream.MapRecord;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.HashMap;
+import java.util.Map;
 
-@RestController
-public class ContactSummaryStreamController {
+@Service
+public class ContactSummaryPublishServiceImpl implements ContactSummaryPublishService {
 
-    private static final Logger logger = LoggerFactory.getLogger(ContactSummaryStreamController.class);
+    private final RedisTemplate<String, Object> redisTemplate;
+    private static final Logger LOGGER = LogManager.getLogger(ContactSummaryPublishServiceImpl.class);
 
-    @Autowired
-    private RedisMessageListenerContainer redisMessageListenerContainer;
-
-    private final ConcurrentHashMap<String, SseEmitter> emitters = new ConcurrentHashMap<>();
-   // private final ConcurrentHashMap<String, String> lastMessages = new ConcurrentHashMap<>();
-    private final ExecutorService executor = Executors.newCachedThreadPool();
-
-    @GetMapping(value = "/contactSummaryStream",produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamMessage() {
-        logger.info("Start of streamMessage method :ContactSummaryStreamController");
-        String channelName = "ac-summary-event";
-        SseEmitter emitter = new SseEmitter(0L);
-        emitters.put(channelName, emitter);
-        ChannelTopic topic = new ChannelTopic(channelName);
-        MessageListener listener = (Message message, byte[] pattern) -> {
-            String data = new String(message.getBody());
-            logger.info("Received message on channel {}: {}", StringEscapeUtils.escapeJava(channelName), StringEscapeUtils.escapeJava(data));
-
-            executor.execute(() -> sendMessage(emitter, data, channelName));
-        };
-
-        redisMessageListenerContainer.addMessageListener(listener, topic);
-
-        emitter.onCompletion(() -> cleanupEmitter(channelName, topic, listener));
-        emitter.onTimeout(() -> cleanupEmitter(channelName, topic, listener));
-        logger.info("End of streamMessage method :ContactSummaryStreamController");
-        return emitter;
+    public ContactSummaryPublishServiceImpl(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
     }
 
-    private void sendMessage(SseEmitter emitter, String data, String channel) {
+    @Override
+    public void publishContactSummary(String jsonPayload) {
+        LOGGER.info("Started publishContactSummary method");
         try {
-            // Check if the emitter is still open
-            if (emitter == null) {
-                logger.debug("Emitter is null for channel: {}", StringEscapeUtils.escapeJava(channel));
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode dataNode = objectMapper.readTree(jsonPayload).path("data");
+
+            if (dataNode.isMissingNode()) {
+                LOGGER.info("No data node found in the payload");
                 return;
             }
 
-            emitter.send(SseEmitter.event().data(data));
-           // lastMessages.put(channel, data); // Update the last message sent for this channel
-        } catch (IllegalStateException e) {
-            logger.error("Attempted to send a message through an emitter that has already completed", e);
-            emitters.remove(channel);
-        } catch (IOException e) {
-            logger.error("Error sending SSE message for channel {}: {}", StringEscapeUtils.escapeJava(channel), e.getMessage());
-            emitters.remove(channel);
+            String ucid = getJsonValue(dataNode, "UCID", "ucid");
+            String summaryText = getJsonValue(dataNode, "SummaryText", "summaryText");
+            boolean isSuccess = dataNode.path("IsSuccess").asBoolean(true);
+            String failedReason = dataNode.path("FailedReason").asText("");
+
+            if (ucid == null) {
+                LOGGER.info("No UCID found in the payload");
+                return;
+            }
+
+            String streamName = String.format("channel-%s", ucid);
+            if (!isSuccess || !failedReason.isEmpty()) {
+                summaryText = String.format("FailedSummary: %s", failedReason);
+            }
+
+            if (summaryText != null) {
+                // Convert data to a map and publish to Redis stream
+                Map<String, String> messageData = new HashMap<>();
+                messageData.put("summaryText", summaryText);
+
+                redisTemplate.opsForStream().add(MapRecord.create(streamName, messageData));
+
+                LOGGER.info("Published to redis channel: {} with data: {}", streamName, summaryText);
+            } else {
+                LOGGER.info("Summary text is null, nothing to publish");
+            }
+
+        } catch (JsonProcessingException e) {
+            LOGGER.error("Error parsing JSON payload: {}", e.getMessage());
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
+        LOGGER.info("End of publishContactSummary method");
     }
 
-    private void cleanupEmitter(String channel, ChannelTopic topic, MessageListener listener) {
-        logger.info("Cleaning up SSE emitter for channel: {}", StringEscapeUtils.escapeJava(channel));
-        emitters.remove(channel);
-      //  lastMessages.remove(channel);
-        redisMessageListenerContainer.removeMessageListener(listener, topic);
-    }
-
-    private String determineChannelName(String callId, String agentId, String profileType) {
-        if (profileType != null && profileType.contains("pbm")) {
-            return String.format("channel-pbm-%s-%s", callId, agentId);
-        } else if (profileType != null && profileType.contains("pharmacy")) {
-            return String.format("channel-pharmacy-%s-%s", callId, agentId);
-        } else {
-            return String.format("channel-%s-%s", callId, agentId);
+    private String getJsonValue(JsonNode dataNode, String primaryKey, String secondaryKey) {
+        JsonNode valueNode = dataNode.path(primaryKey);
+        if (valueNode.isMissingNode()) {
+            valueNode = dataNode.path(secondaryKey);
         }
+        return valueNode.isMissingNode() ? null : valueNode.asText();
     }
 }
